@@ -27,7 +27,7 @@ export class ExpertsController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.expertsService.findOne(+id);
+    return this.expertsService.findOne(id);
   }
 
   @Patch(':id')
@@ -35,11 +35,11 @@ export class ExpertsController {
     @Param('id') id: string,
     @Body() updateExpertDto: UpdateExpertDto,
   ) {
-    return this.expertsService.update(+id, updateExpertDto);
+    return this.expertsService.update(id, updateExpertDto);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    return this.expertsService.remove(+id);
+    return this.expertsService.remove(id);
   }
 }

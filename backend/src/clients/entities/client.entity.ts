@@ -1,27 +1,35 @@
-import { Appointment } from 'src/appointments/entities/appointment.entity';
-import { AbstractEntity } from 'src/database/abstract.entity';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
 
-@Entity()
-export class Client extends AbstractEntity<Client> {
-  @Column()
+export type ClientDocument = HydratedDocument<Client>;
+
+@Schema({ timestamps: true })
+export class Client {
+  @Prop()
   nickname: string;
 
-  @Column()
+  @Prop()
   firstName: string;
 
-  @Column()
+  @Prop()
   lastName: string;
 
-  @Column({ unique: true })
+  @Prop({ unique: true })
   phoneNumber: string;
 
-  @Column()
+  @Prop()
   email: string;
 
-  @Column()
+  @Prop()
   note: string;
-
-  @OneToMany(() => Appointment, (appointment) => appointment.client)
-  appointments: Appointment[];
 }
+
+export const ClientSchema = SchemaFactory.createForClass(Client);
+ClientSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+  },
+});

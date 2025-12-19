@@ -1,5 +1,5 @@
 export interface Client {
-  id: number;
+  id: string;
   nickname: string;
   phoneNumber: string;
   firstName: string;
@@ -10,7 +10,7 @@ export interface Client {
 }
 
 export const DEFAULT_CLIENT: Client = {
-  id: 0,
+  id: "",
   nickname: "",
   phoneNumber: "",
   firstName: "",

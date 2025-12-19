@@ -8,7 +8,7 @@ import { BaseTable, TableColumnProp } from "shared/ui/base-table";
 export const ServicesPage = () => {
   const dispatch = useDispatch();
   const { data, error, isLoading } = useGetServicesQuery();
-  const [id, setId] = useState(0);
+  const [id, setId] = useState("");
   const item = id ? data?.find((i) => i.id === id) : DEFAULT_SERVICE;
 
   const columns: TableColumnProp[] = [

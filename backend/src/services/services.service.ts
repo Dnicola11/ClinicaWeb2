@@ -1,42 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Service } from './entities/service.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Service, ServiceDocument } from './entities/service.entity';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class ServicesService {
   constructor(
-    @InjectRepository(Service)
-    private readonly servicesRepository: Repository<Service>,
-    private readonly entityManager: EntityManager,
+    @InjectModel(Service.name)
+    private readonly servicesModel: Model<ServiceDocument>,
   ) {}
   async create(createServiceDto: CreateServiceDto) {
-    const item = new Service({
+    const item = new this.servicesModel({
       ...createServiceDto,
     });
-
-    await this.entityManager.save(item);
+    return item.save();
   }
 
   async findAll() {
-    return this.servicesRepository.find();
+    return this.servicesModel.find().exec();
   }
 
-  async findOne(id: number) {
-    return this.servicesRepository.findOneBy({ id });
+  async findOne(id: string) {
+    return this.servicesModel.findById(id).exec();
   }
 
-  async update(id: number, updateServiceDto: UpdateServiceDto) {
-    const item = await this.servicesRepository.findOneBy({ id });
-    item.name = updateServiceDto.name;
-    item.color = updateServiceDto.color;
-    item.duration = updateServiceDto.duration;
-    await this.entityManager.save(item);
+  async update(id: string, updateServiceDto: UpdateServiceDto) {
+    return this.servicesModel
+      .findByIdAndUpdate(id, updateServiceDto, { new: true })
+      .exec();
   }
 
-  async remove(id: number) {
-    this.servicesRepository.delete(id);
+  async remove(id: string) {
+    return this.servicesModel.findByIdAndDelete(id).exec();
   }
 }

@@ -1,19 +1,23 @@
-import { Appointment } from 'src/appointments/entities/appointment.entity';
-import { AbstractEntity } from 'src/database/abstract.entity';
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
 
-@Entity()
-export class Expert extends AbstractEntity<Expert> {
-  @Column()
+export type ExpertDocument = HydratedDocument<Expert>;
+
+@Schema({ timestamps: true })
+export class Expert {
+  @Prop()
   nickname: string;
 
-  @Column()
+  @Prop()
   color: string;
-
-  // @ManyToMany(() => Service, (service) => service.experts)
-  // @JoinTable()
-  // services: Service[];
-
-  @OneToMany(() => Appointment, (appointment) => appointment.expert)
-  appointments: Appointment[];
 }
+
+export const ExpertSchema = SchemaFactory.createForClass(Expert);
+ExpertSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+  },
+});

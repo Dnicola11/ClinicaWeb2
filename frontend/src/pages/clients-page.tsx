@@ -9,7 +9,7 @@ export const ClientsPage = () => {
   const dispatch = useDispatch();
   const { data, error, isLoading } = useGetClientsQuery();
 
-  const [id, setId] = useState(0);
+  const [id, setId] = useState("");
   const item = id ? data?.find((i) => i.id === id) : DEFAULT_CLIENT;
 
   const columns: TableColumnProp[] = [

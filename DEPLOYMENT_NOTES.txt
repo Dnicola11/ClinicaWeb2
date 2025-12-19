@@ -1,0 +1,41 @@
+ClinicaWeb2 - Azure + MongoDB Atlas
+
+Resumen:
+- Backend: Azure App Service (Linux, Node 20)
+- Frontend: Azure Static Web Apps
+- DB: MongoDB Atlas
+- CI/CD: Azure DevOps Pipelines (azure-pipelines.yml)
+
+1) MongoDB Atlas
+- Crear un cluster (free tier sirve).
+- Crear usuario y password de DB.
+- Agregar la IP 0.0.0.0/0 en Network Access (solo para demo).
+- Copiar la connection string y reemplazar <user>, <password>, <db>.
+
+2) Azure App Service (backend)
+- Crear App Service Linux con runtime Node 20.
+- Configurar App Settings:
+  - MONGODB_URI = <connection string de Atlas>
+  - NODE_ENV = production
+  - WEBSITE_RUN_FROM_PACKAGE = 1
+  - SCM_DO_BUILD_DURING_DEPLOYMENT = 1 (opcional si no subes node_modules)
+- Startup Command recomendado: npm run start:prod
+- URL: https://<backend-app>.azurewebsites.net
+
+3) Azure Static Web Apps (frontend)
+- Crear recurso Static Web Apps.
+- Copiar el deployment token.
+- URL: https://<staticwebapp>.azurestaticapps.net
+
+4) Azure DevOps Pipeline
+- Crear Service Connection a Azure en DevOps.
+- En azure-pipelines.yml, actualizar:
+  - azureSubscription: nombre de tu Service Connection
+  - backendAppName: nombre del App Service
+  - frontendApiUrl: URL del backend (https://<backend-app>.azurewebsites.net)
+- En variables del pipeline:
+  - SWA_DEPLOYMENT_TOKEN = token de Static Web Apps
+
+Notas:
+- El frontend toma la API desde VITE_API_URL en build.
+- El pipeline usa npm install (no npm ci) porque package-lock.json no fue regenerado.

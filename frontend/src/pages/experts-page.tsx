@@ -9,7 +9,7 @@ export const ExpertsPage = () => {
   const dispatch = useDispatch();
   const { data, error, isLoading } = useGetExpertsQuery();
 
-  const [id, setId] = useState(0);
+  const [id, setId] = useState("");
   const item = id ? data?.find((i) => i.id === id) : DEFAULT_EXPERT;
 
   const columns: TableColumnProp[] = [

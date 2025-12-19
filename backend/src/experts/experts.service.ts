@@ -1,40 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { CreateExpertDto } from './dto/create-expert.dto';
 import { UpdateExpertDto } from './dto/update-expert.dto';
-import { Expert } from './entities/expert.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Expert, ExpertDocument } from './entities/expert.entity';
+import { Model } from 'mongoose';
 @Injectable()
 export class ExpertsService {
   constructor(
-    @InjectRepository(Expert)
-    private readonly expertsRepository: Repository<Expert>,
-    private readonly entityManager: EntityManager,
+    @InjectModel(Expert.name)
+    private readonly expertsModel: Model<ExpertDocument>,
   ) {}
   async create(createExpertDto: CreateExpertDto) {
-    const item = new Expert({
+    const item = new this.expertsModel({
       ...createExpertDto,
     });
-
-    await this.entityManager.save(item);
+    return item.save();
   }
 
   async findAll() {
-    return this.expertsRepository.find();
+    return this.expertsModel.find().exec();
   }
 
-  async findOne(id: number) {
-    return this.expertsRepository.findOneBy({ id });
+  async findOne(id: string) {
+    return this.expertsModel.findById(id).exec();
   }
 
-  async update(id: number, updateExpertDto: UpdateExpertDto) {
-    const item = await this.expertsRepository.findOneBy({ id });
-    item.nickname = updateExpertDto.nickname;
-    item.color = updateExpertDto.color;
-    await this.entityManager.save(item);
+  async update(id: string, updateExpertDto: UpdateExpertDto) {
+    return this.expertsModel
+      .findByIdAndUpdate(id, updateExpertDto, { new: true })
+      .exec();
   }
 
-  async remove(id: number) {
-    this.expertsRepository.delete(id);
+  async remove(id: string) {
+    return this.expertsModel.findByIdAndDelete(id).exec();
   }
 }

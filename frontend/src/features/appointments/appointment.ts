@@ -3,7 +3,7 @@ import { Expert } from "features/experts/expert";
 import { Service } from "features/services/service";
 
 export interface Appointment {
-  id: number;
+  id: string;
   startTime: string;
   duration: number;
   client?: Client;
@@ -18,7 +18,7 @@ export interface FormattedAppointment extends Appointment {
 }
 
 export const DEFAULT_APPOINTMENT: Appointment = {
-  id: 0,
+  id: "",
   startTime: new Date(new Date().setHours(10, 0, 0, 0)).toString(),
   duration: 30,
   client: undefined,

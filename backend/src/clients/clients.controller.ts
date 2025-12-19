@@ -27,7 +27,7 @@ export class ClientsController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.clientsService.findOne(+id);
+    return this.clientsService.findOne(id);
   }
 
   @Patch(':id')
@@ -35,11 +35,11 @@ export class ClientsController {
     @Param('id') id: string,
     @Body() updateClientDto: UpdateClientDto,
   ) {
-    return this.clientsService.update(+id, updateClientDto);
+    return this.clientsService.update(id, updateClientDto);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    return this.clientsService.remove(+id);
+    return this.clientsService.remove(id);
   }
 }

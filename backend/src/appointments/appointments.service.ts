@@ -1,43 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { Appointment } from './entities/appointment.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, Between } from 'typeorm';
-import { Service } from 'src/services/entities/service.entity';
-import { Client } from 'src/clients/entities/client.entity';
-import { Expert } from 'src/experts/entities/expert.entity';
+import { Appointment, AppointmentDocument } from './entities/appointment.entity';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Service, ServiceDocument } from 'src/services/entities/service.entity';
+import { Client, ClientDocument } from 'src/clients/entities/client.entity';
+import { Expert, ExpertDocument } from 'src/experts/entities/expert.entity';
 import { ReadAppointmenstDto } from './dto/read-appointments.dto';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
-    @InjectRepository(Appointment)
-    private readonly appointmentsRepository: Repository<Appointment>,
-    private readonly entityManager: EntityManager,
+    @InjectModel(Appointment.name)
+    private readonly appointmentsModel: Model<AppointmentDocument>,
+    @InjectModel(Service.name)
+    private readonly servicesModel: Model<ServiceDocument>,
+    @InjectModel(Client.name)
+    private readonly clientsModel: Model<ClientDocument>,
+    @InjectModel(Expert.name)
+    private readonly expertsModel: Model<ExpertDocument>,
   ) {}
   async create(createAppointmentDto: CreateAppointmentDto) {
     const { serviceId, clientId, expertId, ...data } = createAppointmentDto;
-    const service = await this.entityManager.findOneBy(Service, {
-      id: serviceId,
-    });
+    const [service, expert, client] = await Promise.all([
+      this.servicesModel.findById(serviceId).exec(),
+      this.expertsModel.findById(expertId).exec(),
+      this.clientsModel.findById(clientId).exec(),
+    ]);
 
-    const expert = await this.entityManager.findOneBy(Expert, {
-      id: expertId,
-    });
-
-    const client = await this.entityManager.findOneBy(Client, {
-      id: clientId,
-    });
-
-    const item = new Appointment({
+    const item = new this.appointmentsModel({
       ...data,
-      service,
-      client,
-      expert,
+      service: service?._id ?? serviceId,
+      client: client?._id ?? clientId,
+      expert: expert?._id ?? expertId,
     });
 
-    await this.entityManager.save(item);
+    return item.save();
   }
 
   async findAll(readAppointmenstDto: ReadAppointmenstDto) {
@@ -48,10 +47,10 @@ export class AppointmentsService {
     switch (view.toLowerCase()) {
       case 'day':
         where = {
-          startTime: Between(
-            date,
-            new Date(date.getTime() + 24 * 60 * 60 * 1000),
-          ),
+          startTime: {
+            $gte: date,
+            $lt: new Date(date.getTime() + 24 * 60 * 60 * 1000),
+          },
         };
         break;
 
@@ -63,7 +62,7 @@ export class AppointmentsService {
           firstDayOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000,
         );
         where = {
-          startTime: Between(firstDayOfWeek, lastDayOfWeek),
+          startTime: { $gte: firstDayOfWeek, $lt: lastDayOfWeek },
         };
         break;
 
@@ -79,52 +78,45 @@ export class AppointmentsService {
           1,
         );
         where = {
-          startTime: Between(firstDayOfMonth, lastDayOfMonth),
+          startTime: { $gte: firstDayOfMonth, $lt: lastDayOfMonth },
         };
         break;
 
       default:
         throw new Error('Invalid view specified.');
     }
-    return this.appointmentsRepository.find({
-      relations: {
-        client: true,
-        service: true,
-        expert: true,
-      },
-      where,
-    });
+    return this.appointmentsModel
+      .find(where)
+      .populate('client')
+      .populate('service')
+      .populate('expert')
+      .exec();
   }
 
-  async findOne(id: number) {
-    return this.appointmentsRepository.findOneBy({ id });
+  async findOne(id: string) {
+    return this.appointmentsModel.findById(id).exec();
   }
 
-  async update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
-    const item = await this.appointmentsRepository.findOneBy({ id });
-    const { serviceId, clientId, expertId } = updateAppointmentDto;
-    const service = await this.entityManager.findOneBy(Service, {
-      id: serviceId,
-    });
+  async update(id: string, updateAppointmentDto: UpdateAppointmentDto) {
+    const { serviceId, clientId, expertId, ...rest } = updateAppointmentDto;
+    const update: Record<string, unknown> = { ...rest };
 
-    const expert = await this.entityManager.findOneBy(Expert, {
-      id: expertId,
-    });
+    if (serviceId) {
+      update.service = serviceId;
+    }
+    if (clientId) {
+      update.client = clientId;
+    }
+    if (expertId) {
+      update.expert = expertId;
+    }
 
-    const client = await this.entityManager.findOneBy(Client, {
-      id: clientId,
-    });
-    item.client = client;
-    item.expert = expert;
-    item.service = service;
-    item.duration = updateAppointmentDto.duration;
-    item.notes = updateAppointmentDto.notes;
-    item.startTime = updateAppointmentDto.startTime;
-    item.status = updateAppointmentDto.status;
-    await this.entityManager.save(item);
+    return this.appointmentsModel
+      .findByIdAndUpdate(id, update, { new: true })
+      .exec();
   }
 
-  async remove(id: number) {
-    await this.appointmentsRepository.delete(id);
+  async remove(id: string) {
+    return this.appointmentsModel.findByIdAndDelete(id).exec();
   }
 }

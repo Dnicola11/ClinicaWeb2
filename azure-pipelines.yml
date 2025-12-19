@@ -1,0 +1,77 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  nodeVersion: "20.x"
+  azureSubscription: "AZURE_SERVICE_CONNECTION"
+  backendAppName: "clinicaweb2-backend"
+  frontendApiUrl: "https://<backend-app>.azurewebsites.net"
+  swaDeploymentToken: $(SWA_DEPLOYMENT_TOKEN)
+
+stages:
+  - stage: deploy
+    displayName: Build_and_Deploy
+    jobs:
+      - job: backend
+        displayName: Backend_App_Service
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - script: npm install
+            workingDirectory: backend
+            displayName: Install_Backend_Dependencies
+
+          - script: npm run build
+            workingDirectory: backend
+            displayName: Build_Backend
+
+          - script: npm prune --omit=dev
+            workingDirectory: backend
+            displayName: Prune_Backend_Dev_Dependencies
+
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: backend
+              includeRootFolder: false
+              archiveType: zip
+              archiveFile: $(Build.ArtifactStagingDirectory)/backend.zip
+              replaceExistingArchive: true
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appType: webAppLinux
+              appName: $(backendAppName)
+              package: $(Build.ArtifactStagingDirectory)/backend.zip
+
+      - job: frontend
+        displayName: Frontend_Static_Web_App
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - script: npm install
+            workingDirectory: frontend
+            displayName: Install_Frontend_Dependencies
+
+          - script: npm run build
+            workingDirectory: frontend
+            displayName: Build_Frontend
+            env:
+              VITE_API_URL: $(frontendApiUrl)
+
+          - task: AzureStaticWebApp@0
+            inputs:
+              azure_static_web_apps_api_token: $(SWA_DEPLOYMENT_TOKEN)
+              app_location: "frontend"
+              output_location: "dist"
+              skip_app_build: true

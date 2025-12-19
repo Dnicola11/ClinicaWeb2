@@ -27,7 +27,7 @@ export class ServicesController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.servicesService.findOne(+id);
+    return this.servicesService.findOne(id);
   }
 
   @Patch(':id')
@@ -35,11 +35,11 @@ export class ServicesController {
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto,
   ) {
-    return this.servicesService.update(+id, updateServiceDto);
+    return this.servicesService.update(id, updateServiceDto);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    return this.servicesService.remove(+id);
+    return this.servicesService.remove(id);
   }
 }

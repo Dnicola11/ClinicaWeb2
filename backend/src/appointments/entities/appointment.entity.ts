@@ -1,35 +1,41 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { Client } from 'src/clients/entities/client.entity';
-import { AbstractEntity } from 'src/database/abstract.entity';
 import { Expert } from 'src/experts/entities/expert.entity';
 import { Service } from 'src/services/entities/service.entity';
-import { Entity, Column, ManyToOne } from 'typeorm';
 
-@Entity()
-export class Appointment extends AbstractEntity<Appointment> {
-  @Column({ type: 'timestamptz' })
+export type AppointmentDocument = HydratedDocument<Appointment>;
+
+@Schema({ timestamps: true })
+export class Appointment {
+  @Prop({ type: Date })
   startTime: Date;
 
-  @Column()
+  @Prop()
   notes: string;
 
-  @Column()
+  @Prop()
   duration: number;
 
-  @Column()
+  @Prop()
   status: string;
 
-  @ManyToOne(() => Client, (client) => client.appointments, {
-    onDelete: 'CASCADE',
-  })
-  client: Client;
+  @Prop({ type: Types.ObjectId, ref: Client.name, required: true })
+  client: Types.ObjectId;
 
-  @ManyToOne(() => Service, (service) => service.appointments, {
-    onDelete: 'CASCADE',
-  })
-  service: Service;
+  @Prop({ type: Types.ObjectId, ref: Service.name, required: true })
+  service: Types.ObjectId;
 
-  @ManyToOne(() => Expert, (expert) => expert.appointments, {
-    onDelete: 'CASCADE',
-  })
-  expert: Expert;
+  @Prop({ type: Types.ObjectId, ref: Expert.name, required: true })
+  expert: Types.ObjectId;
 }
+
+export const AppointmentSchema = SchemaFactory.createForClass(Appointment);
+AppointmentSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+  },
+});
